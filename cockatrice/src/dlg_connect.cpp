@@ -330,6 +330,31 @@ QString DlgConnect::getHost() const
     return hostEdit->text().trimmed();
 }
 
+void DlgConnect::setServer(QString serverName, QString address, unsigned int port)
+{
+    // Check if server is in saved list
+    bool serverSaved = false;
+    int i = 0;
+    for (std::pair<QString, UserConnection_Information> host: savedHostList) {
+        UserConnection_Information conn = host.second;
+        if (address == conn.getServer()) {
+            serverSaved = true;
+            previousHosts->setCurrentIndex(i);
+        }
+        
+        i++;
+    }    
+    
+    if (serverSaved) {
+        
+    } else {
+        this->newHostSelected(true);
+        this->saveEdit->setText(serverName);
+        this->hostEdit->setText(address);
+        this->portEdit->setText(QString(port));
+    }
+}
+
 bool DeleteHighlightedItemWhenShiftDelPressedEventFilter::eventFilter(QObject *obj, QEvent *event)
 {
     if (event->type() == QEvent::KeyPress) {

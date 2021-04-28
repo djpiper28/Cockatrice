@@ -47,6 +47,7 @@ public:
     {
         return passwordEdit->text();
     }
+    void setServer(QString serverName, QString address, unsigned int port);
 
 public slots:
     void downloadThePublicServers();

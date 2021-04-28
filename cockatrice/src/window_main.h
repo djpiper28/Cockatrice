@@ -22,6 +22,7 @@
 
 #include "abstractclient.h"
 #include "pb/response.pb.h"
+#include "applicationinstancemanager.h"
 
 #include <QList>
 #include <QMainWindow>
@@ -50,6 +51,7 @@ public slots:
     void actCheckCardUpdates();
     void actCheckServerUpdates();
 private slots:
+    void processInterProcessCommunication(const QString &msg);
     void updateTabMenu(const QList<QMenu *> &newMenuList);
     void statusChanged(ClientStatus _status);
     void processConnectionClosedEvent(const Event_ConnectionClosed &event);
@@ -68,6 +70,7 @@ private slots:
     void pixmapCacheSizeChanged(int newSizeInMBs);
     void notifyUserAboutUpdate();
     void actConnect();
+    void actConnectWithDefault(QString name, QString address, unsigned int port);
     void actDisconnect();
     void actSinglePlayer();
     void actWatchReplay();
@@ -140,15 +143,16 @@ private:
     GameReplay *replay;
     DlgTipOfTheDay *tip;
     QUrl connectTo;
-
+    ApplicationInstanceManager *instanceManager;
+private slots:
+    void messageReceived(const QString &message);
 public:
-    explicit MainWindow(QWidget *parent = nullptr);
+    explicit MainWindow(ApplicationInstanceManager *instanceManager, QWidget *parent = nullptr);
     void setConnectTo(QString url)
     {
         connectTo = QUrl(QString("cockatrice://%1").arg(url));
     }
     ~MainWindow() override;
-
 protected:
     void closeEvent(QCloseEvent *event) override;
     void changeEvent(QEvent *event) override;

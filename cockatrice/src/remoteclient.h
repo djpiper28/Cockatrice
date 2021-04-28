@@ -19,7 +19,7 @@ signals:
     void activateError();
     void socketError(const QString &errorString);
     void protocolVersionMismatch(int clientVersion, int serverVersion);
-    void
+    void 
     sigConnectToServer(const QString &hostname, unsigned int port, const QString &_userName, const QString &_password);
     void sigRegisterToServer(const QString &hostname,
                              unsigned int port,

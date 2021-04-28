@@ -184,8 +184,127 @@ void MainWindow::activateAccepted()
 // Actions
 
 void MainWindow::actConnect()
+{    
+    dlgConnect = new DlgConnect(this);
+    connect(dlgConnect, SIGNAL(sigStartForgotPasswordRequest()), this, SLOT(actForgotPasswordRequest()));
+    
+    if (dlgConnect->exec()) {
+        client->connectToServer(dlgConnect->getHost(), static_cast<unsigned int>(dlgConnect->getPort()),
+                                dlgConnect->getPlayerName(), dlgConnect->getPassword());
+    }   
+}
+
+void MainWindow::processInterProcessCommunication(const QString &msg)
+{
+    qDebug("Received message");
+    
+    // index 0 is type (deck, replay, xscheme) and; 1 is the URI
+    // Check size
+    QStringList msgParts = msg.split(':');
+    
+    // Check size. If the size is less than then it is probably the connected message
+    if (msgParts.size() > 1) { 
+        if (msgParts.at(0) == "scheme" && msgParts.size() > 2) {              
+            // Rejoin the URI
+            QString URI = "ws:";// the // is left in the URI
+            int port = -1;
+            
+            for (int i = 2; i < msgParts.size(); i++) {
+                if (i < msgParts.size() - 1) {
+                    URI += msgParts.at(i);
+                    URI += ":";
+                } else {
+                    QStringList args = msg.split(QRegExp("&|?"));
+                    int roomID = -1;
+                    int gameID = -1;
+                    
+                    // is the stuff after the last : a port?
+                    bool ok;
+                    int temp = args.at(0).toInt(&ok, 10);
+                    if (ok) {
+                        port = temp;
+                    } else {
+                        URI += args.at(0);
+                    }
+                    
+                    // Default port
+                    if (port == -1) {
+                        port = 4748;
+                    }                    
+                    
+                    // Tell peers that we are connected to this and not to open their own instance
+                    if (client->peerName() == URI) {
+                        instanceManager->sendMessage("connected");
+                    }
+                    
+                    // Check for ?a=b&c=d whatever you call those url things
+                    if (args.size() != 1) {
+                        // Process args
+                        for (int j = 2; j < args.size(); j++) {
+                            QStringList argsSplit = msg.split(QRegExp("="));
+                            if (argsSplit.size() != 2) {
+                                qDebug("Invalid URI args");
+                            } else {
+                                QString tag = argsSplit.at(0);
+                                QString value = argsSplit.at(1);
+                                
+                                if (tag == "roomID") {
+                                    // Join if not in the room
+                                    bool ok;
+                                    
+                                    int temp = tag.toInt(&ok, 10);
+                                    if (ok) {
+                                        roomID = temp;
+                                    }
+                                } else if (tag == "gameID") {
+                                    // Join if not in the game
+                                    
+                                    int temp = tag.toInt(&ok, 10);
+                                    if (ok) {
+                                        gameID = temp;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+        } else {
+            // Rejoin the URI
+            QString URI = "";
+            for (int i = 2; i < msgParts.size(); i++) {
+                URI += msgParts.at(i);
+                if (i < msgParts.size() - 1) {
+                    URI += ":";
+                }
+            }
+            
+            if (msgParts.at(0) == "replay") {
+                QFile file(URI);
+                if (!file.open(QIODevice::ReadOnly))
+                    return;
+                QByteArray buf = file.readAll();
+                file.close();
+                
+                replay = new GameReplay;
+                replay->ParseFromArray(buf.data(), buf.size());
+                
+                tabSupervisor->openReplay(replay);
+            } else if (msgParts.at(0) == "deck") { 
+                DeckLoader *dl = new DeckLoader();
+                dl->loadFromFile(URI, DeckLoader::FileFormat::CockatriceFormat);
+                
+                tabSupervisor->addDeckEditorTab(dl);
+            }
+        }
+    }
+}
+    
+void MainWindow::actConnectWithDefault(QString name, QString address, unsigned int port)
 {
     dlgConnect = new DlgConnect(this);
+    dlgConnect->setServer(name, address, port);
     connect(dlgConnect, SIGNAL(sigStartForgotPasswordRequest()), this, SLOT(actForgotPasswordRequest()));
 
     if (dlgConnect->exec()) {
@@ -768,7 +887,7 @@ void MainWindow::createMenus()
     helpMenu->addAction(aViewLog);
 }
 
-MainWindow::MainWindow(QWidget *parent)
+MainWindow::MainWindow(ApplicationInstanceManager *instanceManager, QWidget *parent)
     : QMainWindow(parent), localServer(nullptr), bHasActivated(false), askedForDbUpdater(false),
       cardUpdateProcess(nullptr), logviewDialog(nullptr)
 {
@@ -839,6 +958,10 @@ MainWindow::MainWindow(QWidget *parent)
 
     // run startup check async
     QTimer::singleShot(0, this, &MainWindow::startupConfigCheck);
+    
+    // Setup instance manager
+    this->instanceManager = instanceManager;    
+    QObject::connect(instanceManager, SIGNAL(ApplicationInstanceManager::messageReceived()), this, SLOT(processInterProcessCommunication()));
 }
 
 void MainWindow::startupConfigCheck()

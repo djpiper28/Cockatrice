@@ -85,7 +85,7 @@ private:
     quint32 maxPlayersFilterMin, maxPlayersFilterMax;
     QTime maxGameAge;
     bool showOnlyIfSpectatorsCanWatch, showSpectatorPasswordProtected, showOnlyIfSpectatorsCanChat,
-        showOnlyIfSpectatorsCanSeeHands;
+         showOnlyIfSpectatorsCanSeeHands;
 
 public:
     GamesProxyModel(QObject *parent = nullptr, const TabSupervisor *_tabSupervisor = nullptr);
