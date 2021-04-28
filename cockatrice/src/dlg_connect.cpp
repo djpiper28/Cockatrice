@@ -63,11 +63,12 @@ DlgConnect::DlgConnect(QWidget *parent) : QDialog(parent)
     autoConnectCheckBox = new QCheckBox(tr("A&uto connect"));
     autoConnectCheckBox->setToolTip(tr("Automatically connect to the most recent login when Cockatrice opens"));
 
-    if (SettingsCache::instance().servers().getSavePassword()) {
-        autoConnectCheckBox->setChecked(static_cast<bool>(SettingsCache::instance().servers().getAutoConnect()));
+    auto &servers = SettingsCache::instance().servers();
+    if (servers.getSavePassword()) {
+        autoConnectCheckBox->setChecked(servers.getAutoConnect() > 0);
         autoConnectCheckBox->setEnabled(true);
     } else {
-        SettingsCache::instance().servers().setAutoConnect(0);
+        servers.setAutoConnect(0);
         autoConnectCheckBox->setChecked(false);
         autoConnectCheckBox->setEnabled(false);
     }
@@ -87,7 +88,7 @@ DlgConnect::DlgConnect(QWidget *parent) : QDialog(parent)
 
     btnForgotPassword = new QPushButton(this);
     btnForgotPassword->setIcon(QPixmap("theme:icons/forgot_password"));
-    btnForgotPassword->setToolTip(tr("Forgot Password"));
+    btnForgotPassword->setToolTip(tr("Reset Password"));
     btnForgotPassword->setFixedWidth(30);
     connect(btnForgotPassword, SIGNAL(released()), this, SLOT(actForgotPassword()));
 
@@ -192,9 +193,10 @@ void DlgConnect::rebuildComboBoxList(int failure)
     UserConnection_Information uci;
     savedHostList = uci.getServerInfo();
 
-    bool autoConnectEnabled = static_cast<bool>(SettingsCache::instance().servers().getAutoConnect());
-    QString previousHostName = SettingsCache::instance().servers().getPrevioushostName();
-    QString autoConnectSaveName = SettingsCache::instance().servers().getSaveName();
+    auto &servers = SettingsCache::instance().servers();
+    bool autoConnectEnabled = servers.getAutoConnect() > 0;
+    QString previousHostName = servers.getPrevioushostName();
+    QString autoConnectSaveName = servers.getSaveName();
 
     int index = 0;
 
@@ -372,6 +374,11 @@ bool DeleteHighlightedItemWhenShiftDelPressedEventFilter::eventFilter(QObject *o
 
 void DlgConnect::actForgotPassword()
 {
+    ServersSettings &servers = SettingsCache::instance().servers();
+    servers.setFPHostName(hostEdit->text());
+    servers.setFPPort(portEdit->text());
+    servers.setFPPlayerName(playernameEdit->text().trimmed());
+
     emit sigStartForgotPasswordRequest();
     reject();
 }
