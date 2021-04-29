@@ -112,7 +112,8 @@ QString const generateClientID()
     return strClientID;
 }
 
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[])
+{
     // Create an instance manager
     const QString appId = QLatin1String("cockatrice-") + getUserIDString() + '-' + VERSION_STRING;
     ApplicationInstanceManager *m_instanceManager = new ApplicationInstanceManager (appId, nullptr);
@@ -225,7 +226,7 @@ int main(int argc, char *argv[]) {
             
             // Create callback to set flag to true
             QObject::connect(m_instanceManager, &ApplicationInstanceManager::messageReceived, 
-                [&msgReceived](const QString &msg) {
+                [&msgReceived](const QString &msg, QObject *socket) {
                     if (msg == "connected") {
                         msgReceived.storeRelaxed(true);
                         qDebug("xSchemeHandle callback from another instance");
@@ -320,6 +321,7 @@ int main(int argc, char *argv[]) {
         qDebug("main(): starting main program");
 
         MainWindow ui(m_instanceManager);
+        
         if (parser.isSet("connect")) {
             ui.setConnectTo(parser.value("connect"));
         }

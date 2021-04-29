@@ -40,11 +40,12 @@
 #include "qtlocalpeer/qtlocalpeer.h"
 
 ApplicationInstanceManager::ApplicationInstanceManager(const QString &appId, QObject *parent)
-    : QObject {parent}
-    , m_peer {new SharedTools::QtLocalPeer{parent, appId}}
-    , m_isFirstInstance {!m_peer->isClient()}
+    : QObject (parent)
+    , m_peer (new SharedTools::QtLocalPeer(parent, appId))
+    , m_isFirstInstance (!m_peer->isClient())
 {
-    connect(m_peer, &SharedTools::QtLocalPeer::messageReceived, this, &ApplicationInstanceManager::messageReceived);
+    connect(m_peer, &SharedTools::QtLocalPeer::messageReceived,
+            this, &ApplicationInstanceManager::messageReceived);
 }
 
 bool ApplicationInstanceManager::isFirstInstance() const

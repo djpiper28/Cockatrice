@@ -197,7 +197,7 @@ void MainWindow::actConnect()
     }   
 }
 
-void MainWindow::processInterProcessCommunication(const QString &msg)
+void MainWindow::processInterProcessCommunication(const QString &msg, QObject *socket)
 {
     qDebug("Received message");
     
@@ -237,7 +237,7 @@ void MainWindow::processInterProcessCommunication(const QString &msg)
                     
                     // Tell peers that we are connected to this and not to open their own instance
                     if (client->peerName() == URI) {
-                        instanceManager->sendMessage("connected");
+                        emit(instanceManager, SIGNAL(ApplicationInstanceManager::sendMessage()), "connected");
                     }
                     
                     // Check for ?a=b&c=d whatever you call those url things
@@ -969,9 +969,8 @@ MainWindow::MainWindow(ApplicationInstanceManager *instanceManager, QWidget *par
     QTimer::singleShot(0, this, &MainWindow::startupConfigCheck);
     
     // Setup instance manager
-    this->instanceManager = instanceManager;    
-    connect(instanceManager, &ApplicationInstanceManager::messageReceived,
-            this, &MainWindow::processInterProcessCommunication);
+    this->instanceManager = instanceManager;
+    connect(instanceManager, SIGNAL(messageReceived()), this, SLOT(processInterProcessCommunication()));
 }
 
 void MainWindow::startupConfigCheck()

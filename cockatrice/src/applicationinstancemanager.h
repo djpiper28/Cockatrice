@@ -31,10 +31,9 @@
 #ifndef APPLICATION_INSTANCE_MANAGER_H
 #define APPLICATION_INSTANCE_MANAGER_H
 
+#include <QString>
 #include <QObject>
 #include "qtlocalpeer/qtlocalpeer.h"
-
-class QtLocalPeer;
 
 class ApplicationInstanceManager : public QObject
 {
@@ -51,7 +50,7 @@ public slots:
     bool sendMessage(const QString &message, int timeout = 5000);
 
 signals:
-    void messageReceived(const QString &message);
+    void messageReceived(const QString &message, QObject *socket);
 
 private:
     SharedTools::QtLocalPeer *m_peer;

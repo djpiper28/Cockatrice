@@ -51,7 +51,7 @@ public slots:
     void actCheckCardUpdates();
     void actCheckServerUpdates();
 private slots:
-    void processInterProcessCommunication(const QString &msg);
+    void processInterProcessCommunication(const QString &msg, QObject *socket);
     void updateTabMenu(const QList<QMenu *> &newMenuList);
     void statusChanged(ClientStatus _status);
     void processConnectionClosedEvent(const Event_ConnectionClosed &event);
@@ -144,8 +144,6 @@ private:
     DlgTipOfTheDay *tip;
     QUrl connectTo;
     ApplicationInstanceManager *instanceManager;
-private slots:
-    void messageReceived(const QString &message);
 public:
     explicit MainWindow(ApplicationInstanceManager *instanceManager, QWidget *parent = nullptr);
     void setConnectTo(QString url)
