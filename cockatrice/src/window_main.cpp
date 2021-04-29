@@ -199,7 +199,7 @@ void MainWindow::actConnect()
 
 void MainWindow::processInterProcessCommunication(const QString &msg, QObject *socket)
 {
-    qDebug("Received message");
+    qDebug() << "Received message " << msg;
     
     // index 0 is type (deck, replay, xscheme) and; 1 is the URI
     // Check size
@@ -962,15 +962,15 @@ MainWindow::MainWindow(ApplicationInstanceManager *instanceManager, QWidget *par
     connect(db, SIGNAL(cardDatabaseNewSetsFound(int, QStringList)), this,
             SLOT(cardDatabaseNewSetsFound(int, QStringList)));
     connect(db, SIGNAL(cardDatabaseAllNewSetsEnabled()), this, SLOT(cardDatabaseAllNewSetsEnabled()));
+    
+    // Setup instance manager
+    this->instanceManager = instanceManager;
+    connect(instanceManager, SIGNAL(messageReceived()), this, SLOT(processInterProcessCommunication()));
 
     tip = new DlgTipOfTheDay();
 
     // run startup check async
     QTimer::singleShot(0, this, &MainWindow::startupConfigCheck);
-    
-    // Setup instance manager
-    this->instanceManager = instanceManager;
-    connect(instanceManager, SIGNAL(messageReceived()), this, SLOT(processInterProcessCommunication()));
 }
 
 void MainWindow::startupConfigCheck()

@@ -113,18 +113,21 @@ QString const generateClientID()
 }
 
 int main(int argc, char *argv[])
-{
+{    
+    // Start trice client
+    QApplication app(argc, argv);
+    
+    qDebug("Starting instance manager");
+    
     // Create an instance manager
     const QString appId = QLatin1String("cockatrice-") + getUserIDString() + '-' + VERSION_STRING;
-    ApplicationInstanceManager *m_instanceManager = new ApplicationInstanceManager (appId, nullptr);
+    ApplicationInstanceManager *m_instanceManager = new ApplicationInstanceManager (appId, &app);
     
     // Check if session zero. If it is then open all of the inputs in this tab    
     bool openInNewClient = m_instanceManager->isFirstInstance();
-    
-    // Check for args. argv[0] is the command.
-    if (argc > 1) {
-        // Check if this is the only cockatrice instance
         
+    // Check for args. argv[0] is the command.
+    if (argc > 1) {        
         // Check the args for opening decks, replays or game joins
         // See cockatrice-cockatrice.xml for the MIME reference.
         const char *xScheme = "cockatrice://";
@@ -132,21 +135,15 @@ int main(int argc, char *argv[])
         QList<QString *> replays;
         QList<QString *> decks;
         QString xSchemeHandle;
+        bool xSchemeFlag = false;
         
         for (int i = 1; i < argc; i++) {
+            qDebug() << "Processing arg " << argv[i];
+            
             // Check arg matches cockatrice://*
             bool isXSchemeHandle = true;
             
-            for (int j = 0; isXSchemeHandle && j < xSchemeLen; j++) {
-                if (argv[i][j] == 0){
-                    isXSchemeHandle = false;
-                    break;
-                }
-                
-                if (argv[i][j] != xScheme[j]) {
-                    isXSchemeHandle = false;                    
-                }
-            }
+            for (int j = 0; (isXSchemeHandle = argv[i][j] != 0 && argv[i][j] == xScheme[j]) && j < xSchemeLen; j++);
             
             if (!isXSchemeHandle) {
                 // Check arg matches *.co(r|d) via a finite state machine
@@ -205,22 +202,28 @@ int main(int argc, char *argv[])
                 // If accepting state
                 if (state == 4) {
                     if (isDeckFile) {
+                        qDebug() << "Deck detected " << argv[i];
                         decks.append(new QString(argv[i]));
                     } else {
+                        qDebug() << "Replay detected" << argv[i];
                         replays.append(new QString(argv[i]));
                     }
                 }
             } else {
-                if (!(xSchemeHandle.isNull() && xSchemeHandle.isEmpty())) {
-                    xSchemeHandle = QString(argv[i]);                
+                if (isXSchemeHandle) {
+                    qDebug() << "xSchemeHandle detected" << argv[i];
+                    xSchemeHandle = QString(argv[i]);
+                    xSchemeFlag = true;
                 } else {
-                    printf("Cockatrice only supports one xScheme-handler uri at a time.");
+                    qWarning("Cockatrice only supports one xScheme-handler uri at a time.");
                 }
             }
         }
         
         // Trigger opening in other instances
-        if (!(openInNewClient && xSchemeHandle.isNull() && xSchemeHandle.isEmpty())) {
+        if ((!openInNewClient) && xSchemeFlag) {
+            qDebug("Sending xScheme handles");
+            
             QAtomicInteger<int> msgReceived;
             msgReceived.storeRelaxed(false);
             
@@ -235,13 +238,13 @@ int main(int argc, char *argv[])
             );
             
             // Send xScheme-handle. Each instance that has the same URL should respond
-            m_instanceManager->sendMessage("xscheme:" + xSchemeHandle, 100);
+            emit(m_instanceManager, SIGNAL(sendMessage), ("xscheme:" + xSchemeHandle), 100);
             
             // Wait some time for a callback
             QThread::msleep(10);
             
             // Disconnect the lambda
-            m_instanceManager->disconnect(SIGNAL(messageReceived(const QString &)));
+            m_instanceManager->disconnect(SIGNAL(messageReceived()));
             
             // If no responses to the xScheme-handle open it in the client
             openInNewClient = !msgReceived.loadRelaxed();
@@ -249,13 +252,15 @@ int main(int argc, char *argv[])
         
         // Send deck and replay requests. The first instance should then open them
         if (!openInNewClient) {
+            qDebug("Sending deck replay handles");
+            
             for (QString *deck: decks) {
-                m_instanceManager->sendMessage("deck:" + *deck, 100); //emit me?
+                m_instanceManager->sendMessage("deck:" + *deck, 100);
                 delete deck;
             }
             
             for (QString *replay: replays) {
-                m_instanceManager->sendMessage("replay" + *replay, 100); //emit me?
+                m_instanceManager->sendMessage("replay:" + *replay, 100);
                 delete replay;
             }
         }
@@ -263,12 +268,12 @@ int main(int argc, char *argv[])
     
     if (!openInNewClient) {
         qDebug("Opening in an another instance.");
-    } else {    
-        // Start trice client
-        QApplication app(argc, argv);
+    } else {  
+        qDebug("Opening in a new instance.");
         QObject::connect(&app, SIGNAL(lastWindowClosed()), &app, SLOT(quit()));
-
+        
         qInstallMessageHandler(CockatriceLogger);
+        
 #ifdef Q_OS_WIN
         app.addLibraryPath(app.applicationDirPath() + "/plugins");
 #endif

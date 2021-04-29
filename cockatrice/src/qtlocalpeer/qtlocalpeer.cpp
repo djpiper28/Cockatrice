@@ -43,8 +43,7 @@ namespace SharedTools {
         QByteArray idc = appId.toUtf8();
         quint16 idNum = qChecksum(idc.constData(), idc.size());
         //### could do: two 16bit checksums over separate halves of id, for a 32bit result - improved uniqeness probability. Every-other-char split would be best.
-        QString res = QLatin1String("qtsingleapplication-")
-        + QString::number(idNum, 16);
+        QString res = "qt-" + appId + QString::number(idNum, 16);
         #if defined(Q_OS_WIN)
         if (!pProcessIdToSessionId) {
             QLibrary lib(QLatin1String("kernel32"));
@@ -65,7 +64,7 @@ namespace SharedTools {
     {
         if (id.isEmpty())
             id = QCoreApplication::applicationFilePath();  //### On win, check if this returns .../argv[0] without casefolding; .\MYAPP == .\myapp on Win
-            socketName = appSessionId(id);
+        socketName = appSessionId(id);
         server = new QLocalServer(this);
         QString lockName = QDir(QDir::tempPath()).absolutePath()
         + QLatin1Char('/') + socketName
