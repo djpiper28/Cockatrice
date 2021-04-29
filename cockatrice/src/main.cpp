@@ -85,7 +85,7 @@ void installNewTranslator()
     qDebug() << "Language changed:" << lang;
 }
 
-QString const getUserIDString()
+static QString const getUserIDString()
 {
     QString uid = "0";
 #ifdef Q_OS_WIN
@@ -134,16 +134,16 @@ int main(int argc, char *argv[]) {
         
         for (int i = 1; i < argc; i++) {
             // Check arg matches cockatrice://*
-            int isXSchemeHandle = 1;
+            bool isXSchemeHandle = true;
             
             for (int j = 0; isXSchemeHandle && j < xSchemeLen; j++) {
                 if (argv[i][j] == 0){
-                    isXSchemeHandle = 0;
+                    isXSchemeHandle = false;
                     break;
                 }
                 
                 if (argv[i][j] != xScheme[j]) {
-                    isXSchemeHandle = 0;                    
+                    isXSchemeHandle = false;                    
                 }
             }
             
@@ -159,7 +159,7 @@ int main(int argc, char *argv[]) {
                  * 4 -> 0 if it is not an epsilon transition (accepting state)
                  */
                 
-                int isDeckFile = 0;
+                bool isDeckFile = 1;
                 
                 for (int j = 0; argv[i][j] != 0; j++) {
                     switch (argv[i][j]) {
@@ -185,7 +185,7 @@ int main(int argc, char *argv[]) {
                             break;
                         // 2 -> 3 if o
                         case 'd':
-                            isDeckFile = 1;
+                            isDeckFile = true; // Dear linter, this statement should fall through
                         case 'r':
                             if (state == 3) {
                                 state = 4;
@@ -196,7 +196,7 @@ int main(int argc, char *argv[]) {
                         // Reset state (all else statements from the above definition)
                         default:
                             state = 0;
-                            isDeckFile = 0;
+                            isDeckFile = false;
                             break;
                     }
                 }
@@ -225,7 +225,7 @@ int main(int argc, char *argv[]) {
             
             // Create callback to set flag to true
             QObject::connect(m_instanceManager, &ApplicationInstanceManager::messageReceived, 
-                [msgReceived](const QString &msg) {
+                [&msgReceived](const QString &msg) {
                     if (msg == "connected") {
                         msgReceived.storeRelaxed(true);
                         qDebug("xSchemeHandle callback from another instance");
@@ -319,7 +319,7 @@ int main(int argc, char *argv[]) {
 
         qDebug("main(): starting main program");
 
-        MainWindow ui = {m_instanceManager};
+        MainWindow ui(m_instanceManager);
         if (parser.isSet("connect")) {
             ui.setConnectTo(parser.value("connect"));
         }

@@ -4,6 +4,13 @@
 
 PROJECT(Cockatrice VERSION "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}")
 
+if (UNIX)
+    set (QT_LOCKED_FILE_IMPL "src/qtlocalpeer/qtlockedfile_unix.cpp")
+endif(UNIX)
+if (WIN32)
+    set (QT_LOCKED_FILE_IMPL "src/qtlocalpeer/qtlockedfile_win.cpp")
+endif(WIN32)
+
 SET(cockatrice_SOURCES
     src/abstractcounter.cpp
     src/counter_general.cpp
@@ -125,6 +132,10 @@ SET(cockatrice_SOURCES
     src/phase.cpp
     src/customlineedit.cpp
     src/translatecountername.cpp
+    src/applicationinstancemanager.cpp
+    src/qtlocalpeer/qtlocalpeer.cpp
+    src/qtlocalpeer/qtlockedfile.cpp
+    ${QT_LOCKED_FILE_IMPL}
     ${VERSION_STRING_CPP}
     )
 

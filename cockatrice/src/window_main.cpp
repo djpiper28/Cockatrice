@@ -19,6 +19,7 @@
  ***************************************************************************/
 #include "window_main.h"
 
+#include "applicationinstancemanager.h"
 #include "carddatabase.h"
 #include "dlg_connect.h"
 #include "dlg_edit_tokens.h"
@@ -289,7 +290,7 @@ void MainWindow::processInterProcessCommunication(const QString &msg)
                 QByteArray buf = file.readAll();
                 file.close();
                 
-                replay = new GameReplay;
+                GameReplay *replay = new GameReplay();
                 replay->ParseFromArray(buf.data(), buf.size());
                 
                 tabSupervisor->openReplay(replay);
@@ -969,7 +970,8 @@ MainWindow::MainWindow(ApplicationInstanceManager *instanceManager, QWidget *par
     
     // Setup instance manager
     this->instanceManager = instanceManager;    
-    QObject::connect(instanceManager, SIGNAL(ApplicationInstanceManager::messageReceived()), this, SLOT(processInterProcessCommunication()));
+    connect(instanceManager, &ApplicationInstanceManager::messageReceived,
+            this, &MainWindow::processInterProcessCommunication);
 }
 
 void MainWindow::startupConfigCheck()

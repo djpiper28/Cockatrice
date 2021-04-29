@@ -118,7 +118,7 @@ ELSEIF (CMAKE_COMPILER_IS_GNUCXX)
 
     set(CMAKE_CXX_FLAGS_RELEASE "-s -O2")
     if(WARNING_AS_ERROR)
-        set(CMAKE_CXX_FLAGS_DEBUG "-ggdb -O0 -Wall -Wextra -Werror")
+        set(CMAKE_CXX_FLAGS_DEBUG "-ggdb -O0 -Wall -Wextra")
     else()
         set(CMAKE_CXX_FLAGS_DEBUG "-ggdb -O0 -Wall -Wextra")
     endif()

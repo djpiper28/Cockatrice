@@ -22,7 +22,6 @@
 
 #include "abstractclient.h"
 #include "pb/response.pb.h"
-#include "applicationinstancemanager.h"
 
 #include <QList>
 #include <QMainWindow>
@@ -31,6 +30,7 @@
 #include <QSystemTrayIcon>
 #include <QtNetwork>
 
+class ApplicationInstanceManager;
 class DlgConnect;
 class DlgViewLog;
 class GameReplay;
@@ -128,7 +128,7 @@ private:
     QList<QMenu *> tabMenus;
     QMenu *cockatriceMenu, *dbMenu, *helpMenu, *trayIconMenu;
     QAction *aConnect, *aDisconnect, *aSinglePlayer, *aWatchReplay, *aDeckEditor, *aFullScreen, *aSettings, *aExit,
-        *aAbout, *aTips, *aCheckCardUpdates, *aRegister, *aForgotPassword, *aUpdate, *aViewLog, *closeAction;
+            *aAbout, *aTips, *aCheckCardUpdates, *aRegister, *aForgotPassword, *aUpdate, *aViewLog, *closeAction;
     QAction *aManageSets, *aEditTokens, *aOpenCustomFolder, *aOpenCustomsetsFolder, *aAddCustomSet;
     TabSupervisor *tabSupervisor;
     WndSets *wndSets;

@@ -1,4 +1,6 @@
 /*
+ * Code sourced from https://github.com/qbittorrent/qBittorrent/. 
+ * Licence below is a verbatim copy of that of qbittorent.
  * Bittorrent Client using Qt and libtorrent.
  * Copyright (C) 2019  Vladimir Golovnev <glassez@yandex.ru>
  *
@@ -39,35 +41,10 @@
 
 ApplicationInstanceManager::ApplicationInstanceManager(const QString &appId, QObject *parent)
     : QObject {parent}
-    , m_peer {new QtLocalPeer {this, appId}}
+    , m_peer {new SharedTools::QtLocalPeer{parent, appId}}
     , m_isFirstInstance {!m_peer->isClient()}
 {
-    connect(m_peer, &QtLocalPeer::messageReceived, this, &ApplicationInstanceManager::messageReceived);
-
-#ifdef Q_OS_WIN
-    auto sharedMem = new QSharedMemory {appId + QLatin1String {"-shared-memory-key"}, this};
-    if (m_isFirstInstance)
-    {
-        // First instance creates shared memory and store PID
-        if (sharedMem->create(sizeof(DWORD)) && sharedMem->lock())
-        {
-            *(static_cast<DWORD *>(sharedMem->data())) = ::GetCurrentProcessId();
-            sharedMem->unlock();
-        }
-    }
-    else
-    {
-        // Later instances attach to shared memory and retrieve PID
-        if (sharedMem->attach() && sharedMem->lock())
-        {
-            ::AllowSetForegroundWindow(*(static_cast<DWORD *>(sharedMem->data())));
-            sharedMem->unlock();
-        }
-    }
-
-    if (!sharedMem->isAttached())
-        qCritical() << "Failed to initialize shared memory: " << sharedMem->errorString();
-#endif
+    connect(m_peer, &SharedTools::QtLocalPeer::messageReceived, this, &ApplicationInstanceManager::messageReceived);
 }
 
 bool ApplicationInstanceManager::isFirstInstance() const
@@ -77,7 +54,7 @@ bool ApplicationInstanceManager::isFirstInstance() const
 
 bool ApplicationInstanceManager::sendMessage(const QString &message, const int timeout)
 {
-    return m_peer->sendMessage(message, timeout);
+    return m_peer->sendMessage(message, timeout, true);
 }
 
 QString ApplicationInstanceManager::appId() const

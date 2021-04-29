@@ -32,6 +32,7 @@
 #define APPLICATION_INSTANCE_MANAGER_H
 
 #include <QObject>
+#include "qtlocalpeer/qtlocalpeer.h"
 
 class QtLocalPeer;
 
@@ -53,7 +54,7 @@ signals:
     void messageReceived(const QString &message);
 
 private:
-    QtLocalPeer *m_peer;
+    SharedTools::QtLocalPeer *m_peer;
     const bool m_isFirstInstance;
 };
 
