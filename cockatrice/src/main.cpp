@@ -186,13 +186,8 @@ int main(int argc, char *argv[])
                         // Reset state (all else statements from the above definition)
                         default:
                             state = 0;
-                        }
-                        break;
-                        // Reset state (all else statements from the above definition)
-                    default:
-                        state = 0;
-                        isDeckFile = false;
-                        break;
+                            isDeckFile = false;
+                            break;
                 }
             }
             

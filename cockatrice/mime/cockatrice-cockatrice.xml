@@ -14,12 +14,12 @@
       -->
   </mime-type>
   
-  <mime-type type="application/cod">
+  <mime-type type="application/cod:cockatrice">
     <comment>Cockatrice deck.</comment>
     <glob pattern="*.cod"/>
   </mime-type>
   
-  <mime-type type="application/cor">
+  <mime-type type="application/cor:cockatrice">
     <comment>Cockatrice replay.</comment>
     <glob pattern="*.cor"/>
   </mime-type>
