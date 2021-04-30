@@ -131,7 +131,7 @@ int main(int argc, char *argv[])
     bool xSchemeFlag = false;
     
     QRegExp deckOrReplayRegex(".*\\.co(d|r)");
-    QRegExp deckRegex(".*\\.co(d|r)");
+    QRegExp deckRegex(".*\\.cod");
     QRegExp xSchemeRegex("cockatrice://.*");
 
     // Check for args. argv[0] is the command.
