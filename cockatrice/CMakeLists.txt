@@ -224,6 +224,7 @@ if(UNIX)
         INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/cockatrice.desktop DESTINATION ${DESKTOPDIR})
         INSTALL(FILES ${cockatrice_QM} DESTINATION share/cockatrice/translations)
         # Run the mime type installer
+        install(CODE "execute_process(COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/mime/mime.sh)")
 
     endif()
 elseif(WIN32)
