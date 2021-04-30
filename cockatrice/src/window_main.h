@@ -70,7 +70,6 @@ private slots:
     void pixmapCacheSizeChanged(int newSizeInMBs);
     void notifyUserAboutUpdate();
     void actConnect();
-    void actConnectWithDefault(QString name, QString address, unsigned int port);
     void actDisconnect();
     void actSinglePlayer();
     void actWatchReplay();

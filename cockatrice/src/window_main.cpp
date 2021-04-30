@@ -209,98 +209,6 @@ void MainWindow::processInterProcessCommunication(const QString &msg, QObject *s
 
     // Check size. If the size is less than then it is probably the connected message
     if (msgParts.size() > 1) {
-        // Example valid inputs:
-        // xscheme:cockatrice://beta.cockatrice.us
-        // join server
-        
-        // xscheme:cockatrice://beta.cockatrice.us:4748
-        // join server
-        
-        // xscheme:cockatrice://beta.cockatrice.us:4748?roomID=1
-        // join server and room
-        
-        // xscheme:cockatrice://beta.cockatrice.us:4748?roomID=1?gameID=99
-        // join server and room and game
-        
-        if (msgParts.at(0) == "xscheme" && msgParts.size() > 2) {
-            qDebug("MainWindow::processInterProcessCommunication(): Parsing xscheme handle ");
-            
-            // Rejoin the URI
-            QString URI = "";
-            unsigned int port = 4748;
-            int roomID = -1;
-            int gameID = -1;
-
-            for (int i = 2; i < msgParts.size(); i++) {
-                if (i == 2) {
-                    URI = QString(msgParts.at(i)).replace(QRegExp("//"), "");
-                } else if (i < msgParts.size() - 1) {                    
-                    URI += msgParts.at(i);
-                    URI += ":";
-                } 
-                
-                if (i == msgParts.size() - 1) {
-                    QStringList args;
-                    if (i == 2) {
-                        URI = QString(msgParts.at(i)).replace(QRegExp("//"), "");
-                        args = URI.split(QRegExp("&|\\?"));
-                        URI = args.at(0);
-                    } else {
-                        args = msgParts.at(i).split(QRegExp("&|\\?"));
-                        
-                        // is the stuff after the last : a port?
-                        bool ok;
-                        int temp = args.at(0).toInt(&ok, 10);
-                        if (ok) {
-                            port = temp;
-                        } else {
-                            URI += args.at(0);
-                        }
-                    }
-                    
-                    // Check for ?a=b&c=d whatever you call those url things
-                    for (int j = 1; j < args.size(); j++) {
-                        QStringList argsSplit = args.at(j).split("=");
-                        if (argsSplit.size() != 2) {
-                            qDebug("MainWindow::processInterProcessCommunication(): Invalid URI args");
-                        } else {
-                            QString tag = argsSplit.at(0);
-                            QString value = argsSplit.at(1);
-                            
-                            if (tag == "roomID") {
-                                // Join if not in the room
-                                bool ok;
-                                
-                                unsigned int temp = tag.toInt(&ok, 10);
-                                if (ok) {
-                                    roomID = temp;
-                                }
-                            } else if (tag == "gameID") {
-                                // Join if not in the game
-                                
-                                bool ok;
-                                unsigned int temp = tag.toInt(&ok, 10);
-                                if (ok) {
-                                    gameID = temp;
-                                }
-                            }
-                        }
-                    }                    
-                }
-            }
-            
-            if (!client->isConnected()) {
-                qDebug() << "Opening dlg for joining server " << URI;
-                actConnectWithDefault(URI, URI, port);
-            }
-            
-            if (roomID != -1 || gameID != -1) {                        
-                tabSupervisor->joinGameRoom(roomID, gameID);
-            }
-            
-            // Tell peers that we are connected to this and not to open their own instance            
-            instanceManager->sendMessage("connected", 10);
-        } else {
             qDebug("MainWindow::processInterProcessCommunication(): Parsing replay/deck open");
 
             // Rejoin the URI
@@ -335,22 +243,9 @@ void MainWindow::processInterProcessCommunication(const QString &msg, QObject *s
                 tabSupervisor->addDeckEditorTab(dl);
             } else {
                 qDebug("MainWindow::processInterProcessCommunication(): Unknown message - assuming it is important");
-            }
-        }
+            }        
     } else {
         qDebug("MainWindow::processInterProcessCommunication(): Unknown message - no :");
-    }
-}
-
-void MainWindow::actConnectWithDefault(QString name, QString address, unsigned int port)
-{
-    dlgConnect = new DlgConnect(this);
-    dlgConnect->setServer(name, address, port);
-    connect(dlgConnect, SIGNAL(sigStartForgotPasswordRequest()), this, SLOT(actForgotPasswordRequest()));
-
-    if (dlgConnect->exec()) {
-        client->connectToServer(dlgConnect->getHost(), static_cast<unsigned int>(dlgConnect->getPort()),
-                                dlgConnect->getPlayerName(), dlgConnect->getPassword());
     }
 }
 
@@ -1259,7 +1154,7 @@ void MainWindow::actCheckCardUpdates()
 
 #if defined(Q_OS_MAC)
     /*
-     * bypass app translocation: quarantined application will be started from a temporary directory eg.
+     * bypass app translocation: quarantined application will be started from a temporary directory eg. 
      * /private/var/folders/tk/qx76cyb50jn5dvj7rrgfscz40000gn/T/AppTranslocation/A0CBBD5A-9264-4106-8547-36B84DB161E2/d/oracle/
      */
     if (dir.absolutePath().startsWith("/private/var/folders")) {

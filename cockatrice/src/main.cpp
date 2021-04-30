@@ -127,8 +127,6 @@ int main(int argc, char *argv[])
     bool openInNewClient = m_instanceManager->isFirstInstance();
     QList<QString *> replays;
     QList<QString *> decks;
-    QString xSchemeHandle;
-    bool xSchemeFlag = false;
 
     // Check for args. argv[0] is the command.
     if (argc > 1) {
@@ -139,121 +137,75 @@ int main(int argc, char *argv[])
 
         for (int i = 1; i < argc; i++) {
             qDebug() << "Processing arg '" << argv[i] << "'";
-
-            // Check arg matches cockatrice://*
-            bool isXSchemeHandle = true;
-
-            for (int j = 0; argv[i][j] != 0 && isXSchemeHandle && j < xSchemeLen; j++) {
-                isXSchemeHandle = argv[i][j] == xScheme[j];
-            }
-
-            if (!isXSchemeHandle) {
-                // Check arg matches *.co(r|d) via a finite state machine
-                int state = 0;
-                /*
-                 * states transitions
-                 * 0 -> 1 if .
-                 * 1 -> 2 if c else 1 -> 0
-                 * 2 -> 3 if o else 2 -> 0
-                 * 3 -> 4 if r or d else 3 -> 0
-                 * 4 -> 0 if it is not an epsilon transition (accepting state)
-                 */
-
-                bool isDeckFile = 1;
-
-                for (int j = 0; argv[i][j] != 0; j++) {
-                    switch (argv[i][j]) {
-                        // 0 -> 1 if .
-                        case '.':
-                            state = 1;
-                            break;
+            // Check arg matches *.co(r|d) via a finite state machine
+            int state = 0;
+            /*
+             * states transitions
+             * 0 -> 1 if .
+             * 1 -> 2 if c else 1 -> 0
+             * 2 -> 3 if o else 2 -> 0
+             * 3 -> 4 if r or d else 3 -> 0
+             * 4 -> 0 if it is not an epsilon transition (accepting state)
+             */
+            
+            bool isDeckFile = 1;
+            
+            for (int j = 0; argv[i][j] != 0; j++) {
+                switch (argv[i][j]) {
+                    // 0 -> 1 if .
+                    case '.':
+                        state = 1;
+                        break;
                         // 1 -> 2 if c
-                        case 'c':
-                            if (state == 1) {
-                                state = 2;
-                            } else {
-                                state = 0;
-                            }
-                            break;
-                        // 2 -> 3 if o
-                        case 'o':
-                            if (state == 2) {
-                                state = 3;
-                            } else {
-                                state = 0;
-                            }
-                            break;
-                        // 2 -> 3 if o
-                        case 'd':
-                            isDeckFile = true; // Dear linter, this statement should fall through
-                        case 'r':
-                            if (state == 3) {
-                                state = 4;
-                            } else {
-                                state = 0;
-                            }
-                            break;
-                        // Reset state (all else statements from the above definition)
-                        default:
+                    case 'c':
+                        if (state == 1) {
+                            state = 2;
+                        } else {
                             state = 0;
-                            isDeckFile = false;
-                            break;
-                    }
-                }
-
-                // If accepting state
-                if (state == 4) {
-                    QString path = "";
-                    if (!QString(argv[i]).contains('/')) {
-                        path = QDir::currentPath() + "/";
-                    }
-
-                    if (isDeckFile) {
-                        qDebug() << "Deck detected " << argv[i];
-                        decks.append(new QString(path + argv[i]));
-                    } else {
-                        qDebug() << "Replay detected " << argv[i];
-                        replays.append(new QString(path + argv[i]));
-                    }
-                }
-            } else {
-                if (isXSchemeHandle) {
-                    qDebug() << "xSchemeHandle detected " << argv[i];
-                    xSchemeHandle = QString(argv[i]);
-                    xSchemeFlag = true;
-                } else {
-                    qWarning("Cockatrice only supports one xScheme-handler uri at a time.");
+                        }
+                        break;
+                        // 2 -> 3 if o
+                    case 'o':
+                        if (state == 2) {
+                            state = 3;
+                        } else {
+                            state = 0;
+                        }
+                        break;
+                        // 2 -> 3 if o
+                    case 'd':
+                        isDeckFile = true; // Dear linter, this statement should fall through
+                    case 'r':
+                        if (state == 3) {
+                            state = 4;
+                        } else {
+                            state = 0;
+                        }
+                        break;
+                        // Reset state (all else statements from the above definition)
+                    default:
+                        state = 0;
+                        isDeckFile = false;
+                        break;
                 }
             }
-        }
-
-        // Trigger opening in other instances
-        if ((!openInNewClient) && xSchemeFlag) {
-            qDebug("Sending xScheme handles");
-
-            QAtomicInteger<int> msgReceived;
-            msgReceived.storeRelaxed(false);
-
-            // Create callback to set flag to true
-            QObject::connect(m_instanceManager, &ApplicationInstanceManager::messageReceived,
-                             [&msgReceived](const QString &msg, QObject *socket) {
-                                 if (msg == "connected") {
-                                     msgReceived.storeRelaxed(true);
-                                     qDebug("xSchemeHandle callback from another instance");
-                                 }
-                             });
-
-            // Send xScheme-handle. Each instance that has the same URL should respond
-            emit(m_instanceManager, SIGNAL(sendMessage), ("xscheme:" + xSchemeHandle), 100);
-
-            // Wait some time for a callback
-            QThread::msleep(10);
-
-            // Disconnect the lambda
-            m_instanceManager->disconnect(SIGNAL(messageReceived()));
-
-            // If no responses to the xScheme-handle open it in the client
-            openInNewClient = !msgReceived.loadRelaxed();
+            
+            // If accepting state
+            if (state == 4) {
+                QString path = "";
+                if (!QString(argv[i]).contains('/')) {
+                    path = QDir::currentPath() + "/";
+                }
+                
+                void actConnectWithDefault(QString name, QString address, unsigned int port);
+                if (isDeckFile) {
+                    qDebug() << "Deck detected " << argv[i];
+                    decks.append(new QString(path + argv[i]));
+                } else {
+                    qDebug() << "Replay detected " << argv[i];
+                    replays.append(new QString(path + argv[i]));
+                }
+            }
         }
 
         // Send deck and replay requests. The first instance should then open them
@@ -347,10 +299,6 @@ int main(int argc, char *argv[])
 
         ui.show();
         qDebug("main(): ui.show() finished");
-
-        if (xSchemeFlag) {
-            ui.processInterProcessCommunication("xscheme:" + xSchemeHandle, nullptr);
-        }
 
         for (QString *deck : decks) {
             ui.processInterProcessCommunication("deck:" + *deck, nullptr);
