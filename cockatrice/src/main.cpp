@@ -186,6 +186,7 @@ int main(int argc, char *argv[])
                         // 2 -> 3 if o
                         case 'd':
                             isDeckFile = true; // Dear linter, this statement should fall through
+                            // intentional fallthrough
                         case 'r':
                             if (state == 3) {
                                 state = 4;
@@ -236,7 +237,8 @@ int main(int argc, char *argv[])
 
             // Create callback to set flag to true
             QObject::connect(m_instanceManager, &ApplicationInstanceManager::messageReceived,
-                             [&msgReceived](const QString &msg, QObject *socket) {
+                             [&msgReceived](const QString &msg, QObject *socket /*socket*/) {
+                                 Q_UNUSED(socket);
                                  if (msg == "connected") {
                                      msgReceived.storeRelaxed(true);
                                      qDebug("xSchemeHandle callback from another instance");
@@ -244,7 +246,7 @@ int main(int argc, char *argv[])
                              });
 
             // Send xScheme-handle. Each instance that has the same URL should respond
-            emit(m_instanceManager, SIGNAL(sendMessage), ("xscheme:" + xSchemeHandle), 100);
+            m_instanceManager->sendMessage("xscheme:" + xSchemeHandle, 100);
 
             // Wait some time for a callback
             QThread::msleep(10);

@@ -52,6 +52,7 @@ public slots:
     void actCheckServerUpdates();
     void processInterProcessCommunication(const QString &msg, QObject *socket);
 private slots:
+    void connectToRoomAndGame();
     void updateTabMenu(const QList<QMenu *> &newMenuList);
     void statusChanged(ClientStatus _status);
     void processConnectionClosedEvent(const Event_ConnectionClosed &event);
@@ -70,7 +71,6 @@ private slots:
     void pixmapCacheSizeChanged(int newSizeInMBs);
     void notifyUserAboutUpdate();
     void actConnect();
-    void actConnectWithDefault(QString name, QString address, unsigned int port);
     void actDisconnect();
     void actSinglePlayer();
     void actWatchReplay();
@@ -115,6 +115,7 @@ private:
     void retranslateUi();
     void createActions();
     void createMenus();
+    void actConnectWithDefault(QString name, QString address, unsigned int port);
 
     void createTrayIcon();
     void createTrayActions();
@@ -143,7 +144,8 @@ private:
     GameReplay *replay;
     DlgTipOfTheDay *tip;
     QUrl connectTo;
-    ApplicationInstanceManager *instanceManager;
+    ApplicationInstanceManager *instanceManager;    
+    int roomID, gameID;
 
 public:
     explicit MainWindow(ApplicationInstanceManager *instanceManager, QWidget *parent = nullptr);

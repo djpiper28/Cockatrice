@@ -228,8 +228,8 @@ void MainWindow::processInterProcessCommunication(const QString &msg, QObject *s
             // Rejoin the URI
             QString URI = "";
             unsigned int port = 4748;
-            int roomID = -1;
-            int gameID = -1;
+            roomID = -1;
+            gameID = -1;
 
             for (int i = 2; i < msgParts.size(); i++) {
                 if (i == 2) {
@@ -292,14 +292,20 @@ void MainWindow::processInterProcessCommunication(const QString &msg, QObject *s
             if (!client->isConnected()) {
                 qDebug() << "Opening dlg for joining server " << URI;
                 actConnectWithDefault(URI, URI, port);
+                
+                // Connect dlgConnect act ok to lambda
+                if (roomID != -1 || gameID != -1) {
+                    connect(dlgConnect, SIGNAL(released()), this, SIGNAL(connectToRoomAndGame()));                
+                    // Tell peers that we are connected to this and not to open their own instance
+                    instanceManager->sendMessage("connected", 10);                
+                }
+            } else if (URI == client->peerName()) {            
+                if (roomID != -1 || gameID != -1) {
+                    tabSupervisor->joinGameRoom(roomID, gameID);
+                }// Tell peers that we are connected to this and not to open their own instance
+                instanceManager->sendMessage("connected", 10);  
             }
-            
-            if (roomID != -1 || gameID != -1) {                        
-                tabSupervisor->joinGameRoom(roomID, gameID);
-            }
-            
-            // Tell peers that we are connected to this and not to open their own instance            
-            instanceManager->sendMessage("connected", 10);
+
         } else {
             qDebug("MainWindow::processInterProcessCommunication(): Parsing replay/deck open");
 
@@ -337,9 +343,13 @@ void MainWindow::processInterProcessCommunication(const QString &msg, QObject *s
                 qDebug("MainWindow::processInterProcessCommunication(): Unknown message - assuming it is important");
             }
         }
-    } else {
+    } else if (msg != "connected") {
         qDebug("MainWindow::processInterProcessCommunication(): Unknown message - no :");
     }
+}
+
+void MainWindow::connectToRoomAndGame() {
+    tabSupervisor->joinGameRoom(roomID, gameID);
 }
 
 void MainWindow::actConnectWithDefault(QString name, QString address, unsigned int port)
