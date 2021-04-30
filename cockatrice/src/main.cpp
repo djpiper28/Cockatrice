@@ -157,7 +157,6 @@ int main(int argc, char *argv[])
                     path = QDir::currentPath() + "/";
                 }
                 
-                void actConnectWithDefault(QString name, QString address, unsigned int port);
                 if (isDeckFile) {
                     qDebug() << "Deck detected " << currentArg;
                     decks.append(new QString(path + currentArg));
