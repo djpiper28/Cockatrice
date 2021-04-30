@@ -128,7 +128,7 @@ private:
     QList<QMenu *> tabMenus;
     QMenu *cockatriceMenu, *dbMenu, *helpMenu, *trayIconMenu;
     QAction *aConnect, *aDisconnect, *aSinglePlayer, *aWatchReplay, *aDeckEditor, *aFullScreen, *aSettings, *aExit,
-            *aAbout, *aTips, *aCheckCardUpdates, *aRegister, *aForgotPassword, *aUpdate, *aViewLog, *closeAction;
+        *aAbout, *aTips, *aCheckCardUpdates, *aRegister, *aForgotPassword, *aUpdate, *aViewLog, *closeAction;
     QAction *aManageSets, *aEditTokens, *aOpenCustomFolder, *aOpenCustomsetsFolder, *aAddCustomSet;
     TabSupervisor *tabSupervisor;
     WndSets *wndSets;
@@ -144,6 +144,7 @@ private:
     DlgTipOfTheDay *tip;
     QUrl connectTo;
     ApplicationInstanceManager *instanceManager;
+
 public:
     explicit MainWindow(ApplicationInstanceManager *instanceManager, QWidget *parent = nullptr);
     void setConnectTo(QString url)
@@ -151,6 +152,7 @@ public:
         connectTo = QUrl(QString("cockatrice://%1").arg(url));
     }
     ~MainWindow() override;
+
 protected:
     void closeEvent(QCloseEvent *event) override;
     void changeEvent(QEvent *event) override;

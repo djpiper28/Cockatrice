@@ -187,34 +187,34 @@ void MainWindow::activateAccepted()
 // Actions
 
 void MainWindow::actConnect()
-{    
+{
     dlgConnect = new DlgConnect(this);
     connect(dlgConnect, SIGNAL(sigStartForgotPasswordRequest()), this, SLOT(actForgotPasswordRequest()));
-    
+
     if (dlgConnect->exec()) {
         client->connectToServer(dlgConnect->getHost(), static_cast<unsigned int>(dlgConnect->getPort()),
                                 dlgConnect->getPlayerName(), dlgConnect->getPassword());
-    }   
+    }
 }
 
 void MainWindow::processInterProcessCommunication(const QString &msg, QObject *socket)
 {
     qDebug() << "MainWindow::processInterProcessCommunication(): Received message " << msg;
-    
+
     // index 0 is type (deck, replay, xscheme) and; 1 is the URI
     // Check size
     QStringList msgParts = msg.split(':');
-    
+
     // Check size. If the size is less than then it is probably the connected message
     if (msgParts.size() > 1) {
-        //xscheme:cockatrice://
+        // xscheme:cockatrice://
         if (msgParts.at(0) == "xscheme" && msgParts.size() > 2) {
             qDebug("MainWindow::processInterProcessCommunication(): Parsing xscheme handle");
-            
+
             // Rejoin the URI
             QString URI = "";
             int port = -1;
-            
+
             for (int i = 1; i < msgParts.size(); i++) {
                 if (i < msgParts.size() - 1) {
                     URI += msgParts.at(i);
@@ -223,7 +223,7 @@ void MainWindow::processInterProcessCommunication(const QString &msg, QObject *s
                     QStringList args = msg.split(QRegExp("&|?"));
                     int roomID = -1;
                     int gameID = -1;
-                    
+
                     // is the stuff after the last : a port?
                     bool ok;
                     int temp = args.at(0).toInt(&ok, 10);
@@ -232,18 +232,17 @@ void MainWindow::processInterProcessCommunication(const QString &msg, QObject *s
                     } else {
                         URI += args.at(0);
                     }
-                    
+
                     // Default port
                     if (port == -1) {
                         port = 4748;
-                    }                    
-                    
+                    }
+
                     // Tell peers that we are connected to this and not to open their own instance
                     if (client->peerName() == URI) {
-                        emit(instanceManager, SIGNAL(sendMessage(QString &, int)), 
-                             "connected", 100);
+                        emit(instanceManager, SIGNAL(sendMessage(QString &, int)), "connected", 100);
                     }
-                    
+
                     // Check for ?a=b&c=d whatever you call those url things
                     if (args.size() != 1) {
                         // Process args
@@ -254,18 +253,18 @@ void MainWindow::processInterProcessCommunication(const QString &msg, QObject *s
                             } else {
                                 QString tag = argsSplit.at(0);
                                 QString value = argsSplit.at(1);
-                                
+
                                 if (tag == "roomID") {
                                     // Join if not in the room
                                     bool ok;
-                                    
+
                                     int temp = tag.toInt(&ok, 10);
                                     if (ok) {
                                         roomID = temp;
                                     }
                                 } else if (tag == "gameID") {
                                     // Join if not in the game
-                                    
+
                                     int temp = tag.toInt(&ok, 10);
                                     if (ok) {
                                         gameID = temp;
@@ -274,16 +273,15 @@ void MainWindow::processInterProcessCommunication(const QString &msg, QObject *s
                             }
                         }
                     } else {
-                        
                     }
-                    
-                    //TODO: connect
+
+                    // TODO: connect
                 }
             }
-            
+
         } else {
             qDebug("MainWindow::processInterProcessCommunication(): Parsing replay/deck open");
-            
+
             // Rejoin the URI
             QString URI = "";
             for (int i = 1; i < msgParts.size(); i++) {
@@ -292,25 +290,25 @@ void MainWindow::processInterProcessCommunication(const QString &msg, QObject *s
                     URI += ":";
                 }
             }
-            
-            if (msgParts.at(0) == "replay") {               
+
+            if (msgParts.at(0) == "replay") {
                 qDebug() << "MainWindow::processInterProcessCommunication(): Opened a replay from external source "
                          << URI;
-                
+
                 QFile file(URI);
                 if (!file.open(QIODevice::ReadOnly))
                     return;
                 QByteArray buf = file.readAll();
                 file.close();
-                
+
                 GameReplay *replay = new GameReplay();
                 replay->ParseFromArray(buf.data(), buf.size());
-                
+
                 tabSupervisor->openReplay(replay);
-            } else if (msgParts.at(0) == "deck") {                
+            } else if (msgParts.at(0) == "deck") {
                 qDebug() << "MainWindow::processInterProcessCommunication(): Opened a deck from external source "
                          << URI;
-                
+
                 DeckLoader *dl = new DeckLoader();
                 qDebug() << "Loading deck status: " << dl->loadFromFile(URI, DeckLoader::FileFormat::CockatriceFormat);
                 tabSupervisor->addDeckEditorTab(dl);
@@ -322,7 +320,7 @@ void MainWindow::processInterProcessCommunication(const QString &msg, QObject *s
         qDebug("MainWindow::processInterProcessCommunication(): Unknown message - no :");
     }
 }
-    
+
 void MainWindow::actConnectWithDefault(QString name, QString address, unsigned int port)
 {
     dlgConnect = new DlgConnect(this);
@@ -981,11 +979,11 @@ MainWindow::MainWindow(ApplicationInstanceManager *instanceManager, QWidget *par
     connect(db, SIGNAL(cardDatabaseNewSetsFound(int, QStringList)), this,
             SLOT(cardDatabaseNewSetsFound(int, QStringList)));
     connect(db, SIGNAL(cardDatabaseAllNewSetsEnabled()), this, SLOT(cardDatabaseAllNewSetsEnabled()));
-    
+
     // Setup instance manager
     this->instanceManager = instanceManager;
-    connect(instanceManager, SIGNAL(messageReceived(const QString &, QObject *)),
-            this, SLOT(processInterProcessCommunication(const QString &, QObject *)));
+    connect(instanceManager, SIGNAL(messageReceived(const QString &, QObject *)), this,
+            SLOT(processInterProcessCommunication(const QString &, QObject *)));
 
     tip = new DlgTipOfTheDay();
 

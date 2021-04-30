@@ -1,5 +1,5 @@
-/* 
- * Code sourced from https://github.com/qbittorrent/qBittorrent/. 
+/*
+ * Code sourced from https://github.com/qbittorrent/qBittorrent/.
  * Licence below is a verbatim copy of that of qbittorent.
  * Bittorrent Client using Qt and libtorrent.
  * Copyright (C) 2019  Vladimir Golovnev <glassez@yandex.ru>
@@ -31,9 +31,10 @@
 #ifndef APPLICATION_INSTANCE_MANAGER_H
 #define APPLICATION_INSTANCE_MANAGER_H
 
-#include <QString>
-#include <QObject>
 #include "qtlocalpeer/qtlocalpeer.h"
+
+#include <QObject>
+#include <QString>
 
 class ApplicationInstanceManager : public QObject
 {

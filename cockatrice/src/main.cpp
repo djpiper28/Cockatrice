@@ -21,11 +21,13 @@
 #include "main.h"
 
 #include "QtNetwork/QNetworkInterface"
+#include "applicationinstancemanager.h"
 #include "carddatabase.h"
 #include "dlg_settings.h"
 #include "featureset.h"
 #include "logger.h"
 #include "pixmapgenerator.h"
+#include "qtlocalpeer/qtlocalpeer.h"
 #include "rng_sfmt.h"
 #include "settingscache.h"
 #include "soundengine.h"
@@ -33,25 +35,23 @@
 #include "thememanager.h"
 #include "version_string.h"
 #include "window_main.h"
-#include "applicationinstancemanager.h"
-#include "qtlocalpeer/qtlocalpeer.h"
 
 #include <QApplication>
+#include <QAtomicInteger>
 #include <QCryptographicHash>
 #include <QDateTime>
 #include <QDebug>
 #include <QDir>
 #include <QFile>
 #include <QLibraryInfo>
+#include <QList>
 #include <QLocale>
 #include <QSystemTrayIcon>
 #include <QTextCodec>
 #include <QTextStream>
+#include <QThread>
 #include <QTranslator>
 #include <QtPlugin>
-#include <QList>
-#include <QAtomicInteger>
-#include <QThread>
 
 #ifdef Q_OS_WIN
 #include <windows.h>
@@ -96,7 +96,7 @@ static QString const getUserIDString()
         uid = QString::fromWCharArray(buffer);
 #else
     uid = QString::number(getuid());
-    #endif
+#endif
     return uid;
 }
 
@@ -113,38 +113,39 @@ QString const generateClientID()
 }
 
 int main(int argc, char *argv[])
-{    
+{
     // Start trice client
     QApplication app(argc, argv);
-    
+
     qDebug("Starting instance manager");
-    
+
     // Create an instance manager
     const QString appId = QLatin1String("cockatrice-") + getUserIDString() + '-' + VERSION_STRING;
-    ApplicationInstanceManager *m_instanceManager = new ApplicationInstanceManager (appId, &app);
-    
-    // Check if session zero. If it is then open all of the inputs in this tab    
+    ApplicationInstanceManager *m_instanceManager = new ApplicationInstanceManager(appId, &app);
+
+    // Check if session zero. If it is then open all of the inputs in this tab
     bool openInNewClient = m_instanceManager->isFirstInstance();
     QList<QString *> replays;
     QList<QString *> decks;
     QString xSchemeHandle;
     bool xSchemeFlag = false;
-        
+
     // Check for args. argv[0] is the command.
-    if (argc > 1) {        
+    if (argc > 1) {
         // Check the args for opening decks, replays or game joins
         // See cockatrice-cockatrice.xml for the MIME reference.
         const char *xScheme = "cockatrice://";
         int xSchemeLen = strlen(xScheme);
-        
+
         for (int i = 1; i < argc; i++) {
             qDebug() << "Processing arg " << argv[i];
-            
+
             // Check arg matches cockatrice://*
             bool isXSchemeHandle = true;
-            
-            for (int j = 0; (isXSchemeHandle = argv[i][j] != 0 && argv[i][j] == xScheme[j]) && j < xSchemeLen; j++);
-            
+
+            for (int j = 0; (isXSchemeHandle = argv[i][j] != 0 && argv[i][j] == xScheme[j]) && j < xSchemeLen; j++)
+                ;
+
             if (!isXSchemeHandle) {
                 // Check arg matches *.co(r|d) via a finite state machine
                 int state = 0;
@@ -156,9 +157,9 @@ int main(int argc, char *argv[])
                  * 3 -> 4 if r or d else 3 -> 0
                  * 4 -> 0 if it is not an epsilon transition (accepting state)
                  */
-                
+
                 bool isDeckFile = 1;
-                
+
                 for (int j = 0; argv[i][j] != 0; j++) {
                     switch (argv[i][j]) {
                         // 0 -> 1 if .
@@ -198,14 +199,14 @@ int main(int argc, char *argv[])
                             break;
                     }
                 }
-                
+
                 // If accepting state
                 if (state == 4) {
                     QString path = "";
-                    if(!QString(argv[i]).contains('/')) {
+                    if (!QString(argv[i]).contains('/')) {
                         path = QDir::currentPath() + "/";
                     }
-                    
+
                     if (isDeckFile) {
                         qDebug() << "Deck detected " << argv[i];
                         decks.append(new QString(path + argv[i]));
@@ -224,61 +225,60 @@ int main(int argc, char *argv[])
                 }
             }
         }
-        
+
         // Trigger opening in other instances
         if ((!openInNewClient) && xSchemeFlag) {
             qDebug("Sending xScheme handles");
-            
+
             QAtomicInteger<int> msgReceived;
             msgReceived.storeRelaxed(false);
-            
+
             // Create callback to set flag to true
-            QObject::connect(m_instanceManager, &ApplicationInstanceManager::messageReceived, 
-                [&msgReceived](const QString &msg, QObject *socket) {
-                    if (msg == "connected") {
-                        msgReceived.storeRelaxed(true);
-                        qDebug("xSchemeHandle callback from another instance");
-                    }
-                }
-            );
-            
+            QObject::connect(m_instanceManager, &ApplicationInstanceManager::messageReceived,
+                             [&msgReceived](const QString &msg, QObject *socket) {
+                                 if (msg == "connected") {
+                                     msgReceived.storeRelaxed(true);
+                                     qDebug("xSchemeHandle callback from another instance");
+                                 }
+                             });
+
             // Send xScheme-handle. Each instance that has the same URL should respond
             emit(m_instanceManager, SIGNAL(sendMessage), ("xscheme:" + xSchemeHandle), 100);
-            
+
             // Wait some time for a callback
             QThread::msleep(10);
-            
+
             // Disconnect the lambda
             m_instanceManager->disconnect(SIGNAL(messageReceived()));
-            
+
             // If no responses to the xScheme-handle open it in the client
             openInNewClient = !msgReceived.loadRelaxed();
-        }        
-        
+        }
+
         // Send deck and replay requests. The first instance should then open them
         if (!openInNewClient) {
             qDebug("Sending deck replay handles");
-            
-            for (QString *deck: decks) {
+
+            for (QString *deck : decks) {
                 m_instanceManager->sendMessage("deck:" + *deck, 100);
                 delete deck;
             }
-            
-            for (QString *replay: replays) {
+
+            for (QString *replay : replays) {
                 m_instanceManager->sendMessage("replay:" + *replay, 100);
                 delete replay;
             }
         }
     }
-    
+
     if (!openInNewClient) {
         qDebug("Opening in an another instance.");
-    } else {  
+    } else {
         qDebug("Opening in a new instance.");
         QObject::connect(&app, SIGNAL(lastWindowClosed()), &app, SLOT(quit()));
-        
+
         qInstallMessageHandler(CockatriceLogger);
-        
+
 #ifdef Q_OS_WIN
         app.addLibraryPath(app.applicationDirPath() + "/plugins");
 #endif
@@ -309,7 +309,7 @@ int main(int argc, char *argv[])
 
         parser.addOptions(
             {{{"c", "connect"}, QCoreApplication::translate("main", "Connect on startup"), "user:pass@host:port"},
-            {{"d", "debug-output"}, QCoreApplication::translate("main", "Debug to file")}});
+             {{"d", "debug-output"}, QCoreApplication::translate("main", "Debug to file")}});
 
         parser.process(app);
 
@@ -346,26 +346,26 @@ int main(int argc, char *argv[])
 
         ui.show();
         qDebug("main(): ui.show() finished");
-   
+
         if (xSchemeFlag) {
             ui.processInterProcessCommunication("xscheme:" + xSchemeHandle, nullptr);
         }
-        
-        for (QString *deck: decks) {
+
+        for (QString *deck : decks) {
             ui.processInterProcessCommunication("deck:" + *deck, nullptr);
             delete deck;
         }
-        
-        for (QString *replay: replays) {
+
+        for (QString *replay : replays) {
             ui.processInterProcessCommunication("replay:" + *replay, nullptr);
             delete replay;
         }
         qDebug("main(): Passed file/xScheme handles to ui");
-        
+
         if (parser.isSet("connect")) {
             ui.setConnectTo(parser.value("connect"));
-        }   
-        
+        }
+
         app.setAttribute(Qt::AA_UseHighDpiPixmaps);
         app.exec();
 
@@ -374,9 +374,9 @@ int main(int argc, char *argv[])
         delete rng;
         PingPixmapGenerator::clear();
         CountryPixmapGenerator::clear();
-        UserLevelPixmapGenerator::clear();    
+        UserLevelPixmapGenerator::clear();
     }
-    
+
     delete m_instanceManager;
 
     return 0;

@@ -337,18 +337,18 @@ void DlgConnect::setServer(QString serverName, QString address, unsigned int por
     // Check if server is in saved list
     bool serverSaved = false;
     int i = 0;
-    for (std::pair<QString, UserConnection_Information> host: savedHostList) {
+    for (std::pair<QString, UserConnection_Information> host : savedHostList) {
         UserConnection_Information conn = host.second;
         if (address == conn.getServer()) {
             serverSaved = true;
             previousHosts->setCurrentIndex(i);
         }
-        
+
         i++;
-    }    
-    
+    }
+
     if (serverSaved) {
-        
+
     } else {
         this->newHostSelected(true);
         this->saveEdit->setText(serverName);

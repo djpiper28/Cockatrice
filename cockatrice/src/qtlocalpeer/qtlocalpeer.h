@@ -25,27 +25,32 @@
 #pragma once
 
 #include "qtlockedfile.h"
+
+#include <QDir>
 #include <QLocalServer>
 #include <QLocalSocket>
-#include <QDir>
-namespace SharedTools {
-    class QtLocalPeer : public QObject
+namespace SharedTools
+{
+class QtLocalPeer : public QObject
+{
+    Q_OBJECT
+public:
+    explicit QtLocalPeer(QObject *parent = 0, const QString &appId = QString());
+    bool isClient();
+    bool sendMessage(const QString &message, int timeout, bool block);
+    QString applicationId() const
     {
-        Q_OBJECT
-    public:
-        explicit QtLocalPeer(QObject *parent = 0, const QString &appId = QString());
-        bool isClient();
-        bool sendMessage(const QString &message, int timeout, bool block);
-        QString applicationId() const
-        { return id; }
-        static QString appSessionId(const QString &appId);
-    Q_SIGNALS:
-        void messageReceived(const QString &message, QObject *socket);
-    protected:
-        void receiveConnection();
-        QString id;
-        QString socketName;
-        QLocalServer* server;
-        QtLockedFile lockFile;
-    };
+        return id;
+    }
+    static QString appSessionId(const QString &appId);
+Q_SIGNALS:
+    void messageReceived(const QString &message, QObject *socket);
+
+protected:
+    void receiveConnection();
+    QString id;
+    QString socketName;
+    QLocalServer *server;
+    QtLockedFile lockFile;
+};
 } // namespace SharedTools

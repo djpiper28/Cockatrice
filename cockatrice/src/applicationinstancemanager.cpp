@@ -1,5 +1,5 @@
 /*
- * Code sourced from https://github.com/qbittorrent/qBittorrent/. 
+ * Code sourced from https://github.com/qbittorrent/qBittorrent/.
  * Licence below is a verbatim copy of that of qbittorent.
  * Bittorrent Client using Qt and libtorrent.
  * Copyright (C) 2019  Vladimir Golovnev <glassez@yandex.ru>
@@ -34,18 +34,15 @@
 #include <windows.h>
 #endif
 
+#include "qtlocalpeer/qtlocalpeer.h"
+
 #include <QDebug>
 #include <QSharedMemory>
 
-#include "qtlocalpeer/qtlocalpeer.h"
-
 ApplicationInstanceManager::ApplicationInstanceManager(const QString &appId, QObject *parent)
-    : QObject (parent)
-    , m_peer (new SharedTools::QtLocalPeer(parent, appId))
-    , m_isFirstInstance (!m_peer->isClient())
+    : QObject(parent), m_peer(new SharedTools::QtLocalPeer(parent, appId)), m_isFirstInstance(!m_peer->isClient())
 {
-    connect(m_peer, &SharedTools::QtLocalPeer::messageReceived,
-            this, &ApplicationInstanceManager::messageReceived);
+    connect(m_peer, &SharedTools::QtLocalPeer::messageReceived, this, &ApplicationInstanceManager::messageReceived);
 }
 
 bool ApplicationInstanceManager::isFirstInstance() const
