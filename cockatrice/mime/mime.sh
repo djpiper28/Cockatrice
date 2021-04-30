@@ -1,9 +1,9 @@
 # Linux mime install script
-xdg-icon-resource install --context mimetypes cockatrice.svg application/cod
-xdg-icon-resource install --context mimetypes cockatrice.svg application/cor
-xdg-icon-resource install --context mimetypes cockatrice.svg x-scheme-handle/cockatrice
+xdg-icon-resource install --context mimetypes --size 300 cockatrice.png application/cod
+xdg-icon-resource install --context mimetypes --size 300 cockatrice.png application/cor
+xdg-icon-resource install --context mimetypes --size 300 cockatrice.png x-scheme-handle/cockatrice
 
-xdg-mime install ../cockatrice-cockatrice.xml
+xdg-mime install cockatrice-cockatrice.xml
 
 # copy desktop file
 cp -f cockatrice.desktop ~/.local/share/applications/$APP.desktop

@@ -223,6 +223,8 @@ if(UNIX)
         INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/resources/cockatrice.svg DESTINATION ${ICONDIR}/hicolor/scalable/apps)
         INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/cockatrice.desktop DESTINATION ${DESKTOPDIR})
         INSTALL(FILES ${cockatrice_QM} DESTINATION share/cockatrice/translations)
+        # Run the mime type installer
+
     endif()
 elseif(WIN32)
         INSTALL(TARGETS cockatrice RUNTIME DESTINATION ./)
