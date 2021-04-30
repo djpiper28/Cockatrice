@@ -50,8 +50,8 @@ class MainWindow : public QMainWindow
 public slots:
     void actCheckCardUpdates();
     void actCheckServerUpdates();
-private slots:
     void processInterProcessCommunication(const QString &msg, QObject *socket);
+private slots:
     void updateTabMenu(const QList<QMenu *> &newMenuList);
     void statusChanged(ClientStatus _status);
     void processConnectionClosedEvent(const Event_ConnectionClosed &event);

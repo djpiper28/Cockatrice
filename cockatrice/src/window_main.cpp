@@ -199,20 +199,23 @@ void MainWindow::actConnect()
 
 void MainWindow::processInterProcessCommunication(const QString &msg, QObject *socket)
 {
-    qDebug() << "Received message " << msg;
+    qDebug() << "MainWindow::processInterProcessCommunication(): Received message " << msg;
     
     // index 0 is type (deck, replay, xscheme) and; 1 is the URI
     // Check size
     QStringList msgParts = msg.split(':');
     
     // Check size. If the size is less than then it is probably the connected message
-    if (msgParts.size() > 1) { 
-        if (msgParts.at(0) == "scheme" && msgParts.size() > 2) {              
+    if (msgParts.size() > 1) {
+        //xscheme:cockatrice://
+        if (msgParts.at(0) == "xscheme" && msgParts.size() > 2) {
+            qDebug("MainWindow::processInterProcessCommunication(): Parsing xscheme handle");
+            
             // Rejoin the URI
-            QString URI = "ws:";// the // is left in the URI
+            QString URI = "";
             int port = -1;
             
-            for (int i = 2; i < msgParts.size(); i++) {
+            for (int i = 1; i < msgParts.size(); i++) {
                 if (i < msgParts.size() - 1) {
                     URI += msgParts.at(i);
                     URI += ":";
@@ -237,7 +240,8 @@ void MainWindow::processInterProcessCommunication(const QString &msg, QObject *s
                     
                     // Tell peers that we are connected to this and not to open their own instance
                     if (client->peerName() == URI) {
-                        emit(instanceManager, SIGNAL(ApplicationInstanceManager::sendMessage()), "connected");
+                        emit(instanceManager, SIGNAL(sendMessage(QString &, int)), 
+                             "connected", 100);
                     }
                     
                     // Check for ?a=b&c=d whatever you call those url things
@@ -246,7 +250,7 @@ void MainWindow::processInterProcessCommunication(const QString &msg, QObject *s
                         for (int j = 2; j < args.size(); j++) {
                             QStringList argsSplit = msg.split(QRegExp("="));
                             if (argsSplit.size() != 2) {
-                                qDebug("Invalid URI args");
+                                qDebug("MainWindow::processInterProcessCommunication(): Invalid URI args");
                             } else {
                                 QString tag = argsSplit.at(0);
                                 QString value = argsSplit.at(1);
@@ -269,21 +273,30 @@ void MainWindow::processInterProcessCommunication(const QString &msg, QObject *s
                                 }
                             }
                         }
+                    } else {
+                        
                     }
+                    
+                    //TODO: connect
                 }
             }
             
         } else {
+            qDebug("MainWindow::processInterProcessCommunication(): Parsing replay/deck open");
+            
             // Rejoin the URI
             QString URI = "";
-            for (int i = 2; i < msgParts.size(); i++) {
+            for (int i = 1; i < msgParts.size(); i++) {
                 URI += msgParts.at(i);
                 if (i < msgParts.size() - 1) {
                     URI += ":";
                 }
             }
             
-            if (msgParts.at(0) == "replay") {
+            if (msgParts.at(0) == "replay") {               
+                qDebug() << "MainWindow::processInterProcessCommunication(): Opened a replay from external source "
+                         << URI;
+                
                 QFile file(URI);
                 if (!file.open(QIODevice::ReadOnly))
                     return;
@@ -294,13 +307,19 @@ void MainWindow::processInterProcessCommunication(const QString &msg, QObject *s
                 replay->ParseFromArray(buf.data(), buf.size());
                 
                 tabSupervisor->openReplay(replay);
-            } else if (msgParts.at(0) == "deck") { 
-                DeckLoader *dl = new DeckLoader();
-                dl->loadFromFile(URI, DeckLoader::FileFormat::CockatriceFormat);
+            } else if (msgParts.at(0) == "deck") {                
+                qDebug() << "MainWindow::processInterProcessCommunication(): Opened a deck from external source "
+                         << URI;
                 
+                DeckLoader *dl = new DeckLoader();
+                qDebug() << "Loading deck status: " << dl->loadFromFile(URI, DeckLoader::FileFormat::CockatriceFormat);
                 tabSupervisor->addDeckEditorTab(dl);
+            } else {
+                qDebug("MainWindow::processInterProcessCommunication(): Unknown message - assuming it is important");
             }
         }
+    } else {
+        qDebug("MainWindow::processInterProcessCommunication(): Unknown message - no :");
     }
 }
     
@@ -965,7 +984,8 @@ MainWindow::MainWindow(ApplicationInstanceManager *instanceManager, QWidget *par
     
     // Setup instance manager
     this->instanceManager = instanceManager;
-    connect(instanceManager, SIGNAL(messageReceived()), this, SLOT(processInterProcessCommunication()));
+    connect(instanceManager, SIGNAL(messageReceived(const QString &, QObject *)),
+            this, SLOT(processInterProcessCommunication(const QString &, QObject *)));
 
     tip = new DlgTipOfTheDay();
 

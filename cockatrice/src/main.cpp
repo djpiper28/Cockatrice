@@ -125,6 +125,10 @@ int main(int argc, char *argv[])
     
     // Check if session zero. If it is then open all of the inputs in this tab    
     bool openInNewClient = m_instanceManager->isFirstInstance();
+    QList<QString *> replays;
+    QList<QString *> decks;
+    QString xSchemeHandle;
+    bool xSchemeFlag = false;
         
     // Check for args. argv[0] is the command.
     if (argc > 1) {        
@@ -132,10 +136,6 @@ int main(int argc, char *argv[])
         // See cockatrice-cockatrice.xml for the MIME reference.
         const char *xScheme = "cockatrice://";
         int xSchemeLen = strlen(xScheme);
-        QList<QString *> replays;
-        QList<QString *> decks;
-        QString xSchemeHandle;
-        bool xSchemeFlag = false;
         
         for (int i = 1; i < argc; i++) {
             qDebug() << "Processing arg " << argv[i];
@@ -201,17 +201,22 @@ int main(int argc, char *argv[])
                 
                 // If accepting state
                 if (state == 4) {
+                    QString path = "";
+                    if(!QString(argv[i]).contains('/')) {
+                        path = QDir::currentPath() + "/";
+                    }
+                    
                     if (isDeckFile) {
                         qDebug() << "Deck detected " << argv[i];
-                        decks.append(new QString(argv[i]));
+                        decks.append(new QString(path + argv[i]));
                     } else {
-                        qDebug() << "Replay detected" << argv[i];
-                        replays.append(new QString(argv[i]));
+                        qDebug() << "Replay detected " << argv[i];
+                        replays.append(new QString(path + argv[i]));
                     }
                 }
             } else {
                 if (isXSchemeHandle) {
-                    qDebug() << "xSchemeHandle detected" << argv[i];
+                    qDebug() << "xSchemeHandle detected " << argv[i];
                     xSchemeHandle = QString(argv[i]);
                     xSchemeFlag = true;
                 } else {
@@ -322,14 +327,9 @@ int main(int argc, char *argv[])
         installNewTranslator();
 
         QLocale::setDefault(QLocale::English);
-
         qDebug("main(): starting main program");
 
         MainWindow ui(m_instanceManager);
-        
-        if (parser.isSet("connect")) {
-            ui.setConnectTo(parser.value("connect"));
-        }
         qDebug("main(): MainWindow constructor finished");
 
         ui.setWindowIcon(QPixmap("theme:cockatrice"));
@@ -346,7 +346,26 @@ int main(int argc, char *argv[])
 
         ui.show();
         qDebug("main(): ui.show() finished");
-
+   
+        if (xSchemeFlag) {
+            ui.processInterProcessCommunication("xscheme:" + xSchemeHandle, nullptr);
+        }
+        
+        for (QString *deck: decks) {
+            ui.processInterProcessCommunication("deck:" + *deck, nullptr);
+            delete deck;
+        }
+        
+        for (QString *replay: replays) {
+            ui.processInterProcessCommunication("replay:" + *replay, nullptr);
+            delete replay;
+        }
+        qDebug("main(): Passed file/xScheme handles to ui");
+        
+        if (parser.isSet("connect")) {
+            ui.setConnectTo(parser.value("connect"));
+        }   
+        
         app.setAttribute(Qt::AA_UseHighDpiPixmaps);
         app.exec();
 
