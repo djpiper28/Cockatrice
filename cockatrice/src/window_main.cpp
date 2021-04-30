@@ -1269,7 +1269,7 @@ void MainWindow::actCheckCardUpdates()
 
 #if defined(Q_OS_MAC)
     /*
-     * bypass app translocation: quarantined application will be started from a temporary directory eg.
+     * bypass app translocation: quarantined application will be started from a temporary directory eg. 
      * /private/var/folders/tk/qx76cyb50jn5dvj7rrgfscz40000gn/T/AppTranslocation/A0CBBD5A-9264-4106-8547-36B84DB161E2/d/oracle/
      */
     if (dir.absolutePath().startsWith("/private/var/folders")) {
