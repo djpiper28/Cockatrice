@@ -138,13 +138,14 @@ int main(int argc, char *argv[])
         int xSchemeLen = strlen(xScheme);
 
         for (int i = 1; i < argc; i++) {
-            qDebug() << "Processing arg " << argv[i];
+            qDebug() << "Processing arg '" << argv[i] << "'";
 
             // Check arg matches cockatrice://*
             bool isXSchemeHandle = true;
 
-            for (int j = 0; (isXSchemeHandle = argv[i][j] != 0 && argv[i][j] == xScheme[j]) && j < xSchemeLen; j++)
-                ;
+            for (int j = 0; argv[i][j] != 0 && isXSchemeHandle && j < xSchemeLen; j++) {
+                isXSchemeHandle = argv[i][j] == xScheme[j];
+            }
 
             if (!isXSchemeHandle) {
                 // Check arg matches *.co(r|d) via a finite state machine

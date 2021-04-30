@@ -336,24 +336,29 @@ void DlgConnect::setServer(QString serverName, QString address, unsigned int por
 {
     // Check if server is in saved list
     bool serverSaved = false;
-    int i = 0;
-    for (std::pair<QString, UserConnection_Information> host : savedHostList) {
-        UserConnection_Information conn = host.second;
-        if (address == conn.getServer()) {
-            serverSaved = true;
-            previousHosts->setCurrentIndex(i);
+    auto &servers = SettingsCache::instance().servers();
+    int index = 0;
+    
+    for (const auto &pair : savedHostList) {
+        const auto &tmp = pair.second;
+        QString saveName = tmp.getSaveName();
+        if (saveName.size()) {
+            previousHosts->addItem(saveName);
+            
+            if (saveName.compare(address) == 0) {
+                previousHosts->setCurrentIndex(index);
+                serverSaved = true;
+                break;
+            }
+            
+            index++;
         }
-
-        i++;
     }
-
-    if (serverSaved) {
-
-    } else {
-        this->newHostSelected(true);
-        this->saveEdit->setText(serverName);
-        this->hostEdit->setText(address);
-        this->portEdit->setText(QString(port));
+    if (!serverSaved) {
+        newHostSelected(true);
+        saveEdit->setText(serverName);
+        hostEdit->setText(address);
+        portEdit->setText(QString::number(port));
     }
 }
 

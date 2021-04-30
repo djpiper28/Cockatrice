@@ -63,7 +63,7 @@ private slots:
     void preRebuildComboBoxList();
     void rebuildComboBoxList(int failure = -1);
 
-private:
+private:    
     QGridLayout *connectionLayout, *loginLayout, *serverInfoLayout, *grid;
     QHBoxLayout *newHolderLayout;
     QGroupBox *loginGroupBox, *serverInfoGroupBox, *restrictionsGroupBox;
