@@ -783,7 +783,7 @@ Server_ProtocolHandler::cmdCreateGame(const Command_CreateGame &cmd, Server_Room
     }
 
     QList<int> gameTypes;
-    for (int i = cmd.game_type_ids_size() - 1; i >= 0; --i) { // FIXME: why are these iterated in reverse?
+    for (int i = 0; i < cmd.game_type_ids_size(); ++i) {
         gameTypes.append(cmd.game_type_ids(i));
     }
 
