@@ -2,6 +2,7 @@
 #define ZONEVIEWWIDGET_H
 
 #include "../../utility/macros.h"
+#include "../../deck/custom_line_edit.h"
 
 #include <QCheckBox>
 #include <QComboBox>
@@ -52,6 +53,8 @@ private:
     QCheckBox shuffleCheckBox;
     QCheckBox pileViewCheckBox;
 
+    SearchLineEdit *searchEdit;
+
     bool canBeShuffled;
     int extraHeight;
     Player *player;
@@ -76,6 +79,7 @@ public:
                    bool _revealZone = false,
                    bool _writeableRevealZone = false,
                    const QList<const ServerInfo_Card *> &cardList = QList<const ServerInfo_Card *>());
+    ~ZoneViewWidget();
     ZoneViewZone *getZone() const
     {
         return zone;

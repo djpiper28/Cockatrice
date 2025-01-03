@@ -1,6 +1,9 @@
 #include "view_zone_widget.h"
 
 #include "../../settings/cache_settings.h"
+#include "../../client/ui/picture_loader.h"
+#include "../../client/ui/pixel_map_generator.h"
+#include "../../deck/custom_line_edit.h"
 #include "../cards/card_item.h"
 #include "../game_scene.h"
 #include "../player/player.h"
@@ -87,6 +90,18 @@ ZoneViewWidget::ZoneViewWidget(Player *_player,
         vbox->addItem(hBottomRow);
     }
 
+    // Search bar
+    searchEdit = new SearchLineEdit;
+    searchEdit->setObjectName("searchEdit");
+    searchEdit->setPlaceholderText(tr("Search by card name (or search expressions)"));
+    searchEdit->setClearButtonEnabled(true);
+    searchEdit->addAction(loadColorAdjustedPixmap("theme:icons/search"), QLineEdit::LeadingPosition);
+    auto help = searchEdit->addAction(QPixmap("theme:icons/info"), QLineEdit::TrailingPosition);
+
+    QGraphicsProxyWidget *searchEditProxy= new QGraphicsProxyWidget;
+    searchEditProxy->setWidget(searchEdit);
+    vbox->addItem(searchEditProxy);
+
     extraHeight = vbox->sizeHint(Qt::PreferredSize).height();
 
     QGraphicsLinearLayout *zoneHBox = new QGraphicsLinearLayout(Qt::Horizontal);
@@ -110,7 +125,6 @@ ZoneViewWidget::ZoneViewWidget(Player *_player,
     zone = new ZoneViewZone(player, _origZone, numberCards, _revealZone, _writeableRevealZone, zoneContainer);
     connect(zone, SIGNAL(wheelEventReceived(QGraphicsSceneWheelEvent *)), scrollBarProxy,
             SLOT(recieveWheelEvent(QGraphicsSceneWheelEvent *)));
-
     retranslateUi();
 
     // only wire up sort options after creating ZoneViewZone, since it segfaults otherwise.
@@ -147,6 +161,11 @@ ZoneViewWidget::ZoneViewWidget(Player *_player,
     lastResizeBeforeVisibleTimer->start(1);
 }
 
+ZoneViewWidget::~ZoneViewWidget()
+{
+    delete searchEdit;
+}
+
 void ZoneViewWidget::processGroupBy(int index)
 {
     auto option = static_cast<CardList::SortOption>(groupBySelector.itemData(index).toInt());
@@ -158,7 +177,7 @@ void ZoneViewWidget::processGroupBy(int index)
 
     // reset sortBy if it has the same value as groupBy
     if (option != CardList::NoSort &&
-        option == static_cast<CardList::SortOption>(sortBySelector.currentData().toInt())) {
+    option == static_cast<CardList::SortOption>(sortBySelector.currentData().toInt())) {
         sortBySelector.setCurrentIndex(1); // set to SortByName
     }
 }
@@ -169,7 +188,7 @@ void ZoneViewWidget::processSortBy(int index)
 
     // set to SortByName instead if it has the same value as groupBy
     if (option != CardList::NoSort &&
-        option == static_cast<CardList::SortOption>(groupBySelector.currentData().toInt())) {
+    option == static_cast<CardList::SortOption>(groupBySelector.currentData().toInt())) {
         sortBySelector.setCurrentIndex(1); // set to SortByName
         return;
     }
@@ -188,7 +207,7 @@ void ZoneViewWidget::retranslateUi()
 {
     setWindowTitle(zone->getTranslatedName(false, CaseNominative));
 
-    { // We can't change the strings after they're put into the QComboBox, so this is our workaround
+    {   // We can't change the strings after they're put into the QComboBox, so this is our workaround
         int oldIndex = groupBySelector.currentIndex();
         groupBySelector.clear();
         groupBySelector.addItem(tr("Ungrouped"), CardList::NoSort);
