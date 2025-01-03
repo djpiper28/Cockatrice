@@ -20,6 +20,8 @@
 #include <QStyleOption>
 #include <QStyleOptionTitleBar>
 #include <QDebug>
+#include <QTextBrowser>
+#include <QDir>
 
 /**
  * @param _player the player the cards were revealed to.
@@ -101,6 +103,7 @@ ZoneViewWidget::ZoneViewWidget(Player *_player,
 
     searchEdit->installEventFilter(&searchKeySignals);
 
+    connect(help, &QAction::triggered, this, &ZoneViewWidget::showSearchSyntaxHelp);
     connect(searchEdit, SIGNAL(textChanged(const QString &)), this, SLOT(updateSearch(const QString &)));
 
     QGraphicsProxyWidget *searchEditProxy= new QGraphicsProxyWidget;
@@ -178,6 +181,42 @@ void ZoneViewWidget::updateSearch(const QString &search)
 {
     qDebug() << "[ViewZoneWidget] Filtering zone by" << search;
     // TODO: this should filter all cards...
+}
+
+void ZoneViewWidget::showSearchSyntaxHelp()
+{
+
+    QFile file("theme:help/search.md");
+
+    if (!file.open(QFile::ReadOnly | QFile::Text)) {
+        return;
+    }
+
+    QTextStream in(&file);
+    QString text = in.readAll();
+    file.close();
+
+    // Poor Markdown Converter
+    auto opts = QRegularExpression::MultilineOption;
+    text = text.replace(QRegularExpression("^(###)(.*)", opts), "<h3>\\2</h3>")
+               .replace(QRegularExpression("^(##)(.*)", opts), "<h2>\\2</h2>")
+               .replace(QRegularExpression("^(#)(.*)", opts), "<h1>\\2</h1>")
+               .replace(QRegularExpression("^------*", opts), "<hr />")
+               .replace(QRegularExpression(R"(\[([^[]+)\]\(([^\)]+)\))", opts), R"(<a href='\2'>\1</a>)");
+
+    auto browser = new QTextBrowser;
+    browser->setParent(nullptr, Qt::Window | Qt::WindowTitleHint | Qt::WindowSystemMenuHint | Qt::WindowMinMaxButtonsHint |
+                                 Qt::WindowCloseButtonHint | Qt::WindowFullscreenButtonHint);
+    browser->setWindowTitle("Search Help");
+    browser->setReadOnly(true);
+    browser->setMinimumSize({500, 600});
+
+    QString sheet = QString("a { text-decoration: underline; color: rgb(71,158,252) };");
+    browser->document()->setDefaultStyleSheet(sheet);
+
+    browser->setHtml(text);
+    connect(browser, &QTextBrowser::anchorClicked, [this](const QUrl &link) { searchEdit->setText(link.fragment()); });
+    browser->show();
 }
 
 void ZoneViewWidget::processGroupBy(int index)

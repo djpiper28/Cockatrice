@@ -74,6 +74,7 @@ private slots:
     void zoneDeleted();
     void moveEvent(QGraphicsSceneMoveEvent * /* event */);
     void resizeEvent(QGraphicsSceneResizeEvent * /* event */);
+    void showSearchSyntaxHelp();
 
 public:
     ZoneViewWidget(Player *_player,
