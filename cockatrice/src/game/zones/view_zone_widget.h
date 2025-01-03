@@ -3,6 +3,7 @@
 
 #include "../../utility/macros.h"
 #include "../../deck/custom_line_edit.h"
+#include "../../client/game_logic/key_signals.h"
 
 #include <QCheckBox>
 #include <QComboBox>
@@ -53,6 +54,7 @@ private:
     QCheckBox shuffleCheckBox;
     QCheckBox pileViewCheckBox;
 
+    KeySignals searchKeySignals;
     SearchLineEdit *searchEdit;
 
     bool canBeShuffled;

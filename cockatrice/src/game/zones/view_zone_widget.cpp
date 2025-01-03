@@ -19,6 +19,7 @@
 #include <QScrollBar>
 #include <QStyleOption>
 #include <QStyleOptionTitleBar>
+#include <QDebug>
 
 /**
  * @param _player the player the cards were revealed to.
@@ -98,6 +99,8 @@ ZoneViewWidget::ZoneViewWidget(Player *_player,
     searchEdit->addAction(loadColorAdjustedPixmap("theme:icons/search"), QLineEdit::LeadingPosition);
     auto help = searchEdit->addAction(QPixmap("theme:icons/info"), QLineEdit::TrailingPosition);
 
+    searchEdit->installEventFilter(&searchKeySignals);
+
     connect(searchEdit, SIGNAL(textChanged(const QString &)), this, SLOT(updateSearch(const QString &)));
 
     QGraphicsProxyWidget *searchEditProxy= new QGraphicsProxyWidget;
@@ -173,6 +176,7 @@ ZoneViewWidget::~ZoneViewWidget()
 
 void ZoneViewWidget::updateSearch(const QString &search)
 {
+    qDebug() << "[ViewZoneWidget] Filtering zone by" << search;
     // TODO: this should filter all cards...
 }
 
