@@ -63,6 +63,7 @@ private:
 signals:
     void closePressed(ZoneViewWidget *zv);
 private slots:
+    void updateSearch(const QString &search);
     void processGroupBy(int value);
     void processSortBy(int value);
     void processSetPileView(QT_STATE_CHANGED_T value);

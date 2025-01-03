@@ -98,7 +98,12 @@ ZoneViewWidget::ZoneViewWidget(Player *_player,
     searchEdit->addAction(loadColorAdjustedPixmap("theme:icons/search"), QLineEdit::LeadingPosition);
     auto help = searchEdit->addAction(QPixmap("theme:icons/info"), QLineEdit::TrailingPosition);
 
+    connect(searchEdit, SIGNAL(textChanged(const QString &)), this, SLOT(updateSearch(const QString &)));
+
     QGraphicsProxyWidget *searchEditProxy= new QGraphicsProxyWidget;
+
+    setFocusPolicy(Qt::ClickFocus);
+    setFocusProxy(searchEditProxy);
     searchEditProxy->setWidget(searchEdit);
     vbox->addItem(searchEditProxy);
 
@@ -164,6 +169,11 @@ ZoneViewWidget::ZoneViewWidget(Player *_player,
 ZoneViewWidget::~ZoneViewWidget()
 {
     delete searchEdit;
+}
+
+void ZoneViewWidget::updateSearch(const QString &search)
+{
+    // TODO: this should filter all cards...
 }
 
 void ZoneViewWidget::processGroupBy(int index)
